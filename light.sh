@@ -58,8 +58,8 @@ services:
           --rpc.port 26658 \
           --core.ip 103.67.203.71 \
           --core.port 14090 \
-          --headers.trusted-peers /ip4/103.67.203.71/tcp/2201/p2p/12D3KooWGKuJauY5bRWpL52Xa9JWBrHp1qdz3vNAFsRQnS7ZZexz, /ip4/131.153.224.169/tcp/2221/p2p/12D3KooWCWdAL61Ppf2S4SfQWtGsDjJnxAU39MW7Vj1iTHNkLZ2t \
-          --p2p.mutual /ip4/103.67.203.71/tcp/2201/p2p/12D3KooWGKuJauY5bRWpL52Xa9JWBrHp1qdz3vNAFsRQnS7ZZexz, /ip4/131.153.224.169/tcp/2221/p2p/12D3KooWCWdAL61Ppf2S4SfQWtGsDjJnxAU39MW7Vj1iTHNkLZ2t \
+          --headers.trusted-peers /ip4/103.67.203.71/tcp/2201/p2p/12D3KooWGKuJauY5bRWpL52Xa9JWBrHp1qdz3vNAFsRQnS7ZZexz,/ip4/131.153.224.169/tcp/2221/p2p/12D3KooWCWdAL61Ppf2S4SfQWtGsDjJnxAU39MW7Vj1iTHNkLZ2t \
+          --p2p.mutual /ip4/103.67.203.71/tcp/2201/p2p/12D3KooWGKuJauY5bRWpL52Xa9JWBrHp1qdz3vNAFsRQnS7ZZexz,/ip4/131.153.224.169/tcp/2221/p2p/12D3KooWCWdAL61Ppf2S4SfQWtGsDjJnxAU39MW7Vj1iTHNkLZ2t \
           --metrics \
           --metrics.endpoint 103.67.203.71:4318 \
           --metrics.tls=false
