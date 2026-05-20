@@ -19,9 +19,9 @@ goto usage
 :write_compose
 (
 echo services:
-echo   celestia-light-node-test:
+echo   celestia-light-node-test-win:
 echo     image: ghcr.io/celestiaorg/celestia-node:v0.28.5-mocha
-echo     container_name: celestia-light-node-test
+echo     container_name: celestia-light-node-test-win
 echo     restart: unless-stopped
 echo     environment:
 echo       - NODE_TYPE=light
@@ -47,8 +47,8 @@ echo           --rpc.addr 0.0.0.0 \
 echo           --rpc.port 26658 \
 echo           --core.ip 103.67.203.71 \
 echo           --core.port 14090 \
-echo           --headers.trusted-peers /ip4/103.67.203.71/tcp/2201/p2p/12D3KooWGKuJauY5bRWpL52Xa9JWBrHp1qdz3vNAFsRQnS7ZZexz \
-echo           --p2p.mutual /ip4/103.67.203.71/tcp/2201/p2p/12D3KooWGKuJauY5bRWpL52Xa9JWBrHp1qdz3vNAFsRQnS7ZZexz \
+echo           --headers.trusted-peers /ip4/103.67.203.71/tcp/2201/p2p/12D3KooWGKuJauY5bRWpL52Xa9JWBrHp1qdz3vNAFsRQnS7ZZexz,/ip4/131.153.224.169/tcp/2221/p2p/12D3KooWCWdAL61Ppf2S4SfQWtGsDjJnxAU39MW7Vj1iTHNkLZ2t \
+echo           --p2p.mutual /ip4/103.67.203.71/tcp/2201/p2p/12D3KooWGKuJauY5bRWpL52Xa9JWBrHp1qdz3vNAFsRQnS7ZZexz,/ip4/131.153.224.169/tcp/2221/p2p/12D3KooWCWdAL61Ppf2S4SfQWtGsDjJnxAU39MW7Vj1iTHNkLZ2t \
 echo           --metrics \
 echo           --metrics.endpoint 103.67.203.71:4318 \
 echo           --metrics.tls=false
@@ -108,7 +108,7 @@ if errorlevel 1 exit /b 1
 
 call :write_compose
 
-docker compose -f "%COMPOSE_FILE%" logs -f celestia-light-node-test
+docker compose -f "%COMPOSE_FILE%" logs -f celestia-light-node-test-win
 goto end
 
 
