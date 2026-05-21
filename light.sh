@@ -1,31 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Celestia Light Node helper for WSL/Linux
-#
-# One-command usage:
-#   bash light.sh up
-#
-# Other commands:
-#   bash light.sh down
-#   bash light.sh logs
-#   bash light.sh restart
-#   bash light.sh reset
-#   bash light.sh ps
-#   bash light.sh pull
-#   bash light.sh config
-#
-# This script:
-#   - generates docker-compose.yml automatically
-#   - creates ./light automatically
-#   - fixes ./light permissions automatically for bind mount
-#   - starts/stops the Celestia node via Docker Compose
-
-chmod +x "$0" 2>/dev/null || true
-
 COMPOSE_FILE="docker-compose.yml"
 SERVICE_NAME="celestia-light-node-test"
 LIGHT_DIR="./light"
+
+chmod +x "$0" 2>/dev/null || true
 
 write_compose_file() {
   cat > "${COMPOSE_FILE}" <<'YAML'
@@ -34,6 +14,7 @@ services:
     image: ghcr.io/celestiaorg/celestia-node:v0.28.5-mocha
     container_name: celestia-light-node-test
     restart: unless-stopped
+    user: "0:0"
     environment:
       - NODE_TYPE=light
       - P2P_NETWORK=private
@@ -46,10 +27,25 @@ services:
       - |
         set -euo pipefail
 
+        TRUSTED_PEERS="/ip4/103.67.203.71/tcp/2201/p2p/12D3KooWGKuJauY5bRWpL52Xa9JWBrHp1qdz3vNAFsRQnS7ZZexz,/ip4/131.153.224.169/tcp/2221/p2p/12D3KooWCWdAL61Ppf2S4SfQWtGsDjJnxAU39MW7Vj1iTHNkLZ2t"
+
+        # Fix only permissions that Celestia actually requires.
+        # Do not chmod everything to 777, because p2p-key must be 0600.
+        mkdir -p /home/celestia
+        chmod 700 /home/celestia || true
+
+        if [ -f /home/celestia/keys/p2p-key ]; then
+          chmod 600 /home/celestia/keys/p2p-key || true
+        fi
+
         if [ ! -f /home/celestia/config.toml ]; then
           celestia light init \
             --p2p.network private \
             --rpc.addr 0.0.0.0
+        fi
+
+        if [ -f /home/celestia/keys/p2p-key ]; then
+          chmod 600 /home/celestia/keys/p2p-key || true
         fi
 
         exec celestia light start \
@@ -58,8 +54,8 @@ services:
           --rpc.port 26658 \
           --core.ip 103.67.203.71 \
           --core.port 14090 \
-          --headers.trusted-peers /ip4/103.67.203.71/tcp/2201/p2p/12D3KooWGKuJauY5bRWpL52Xa9JWBrHp1qdz3vNAFsRQnS7ZZexz,/ip4/131.153.224.169/tcp/2221/p2p/12D3KooWCWdAL61Ppf2S4SfQWtGsDjJnxAU39MW7Vj1iTHNkLZ2t \
-          --p2p.mutual /ip4/103.67.203.71/tcp/2201/p2p/12D3KooWGKuJauY5bRWpL52Xa9JWBrHp1qdz3vNAFsRQnS7ZZexz,/ip4/131.153.224.169/tcp/2221/p2p/12D3KooWCWdAL61Ppf2S4SfQWtGsDjJnxAU39MW7Vj1iTHNkLZ2t \
+          --headers.trusted-peers "$$TRUSTED_PEERS" \
+          --p2p.mutual "$$TRUSTED_PEERS" \
           --metrics \
           --metrics.endpoint 103.67.203.71:4318 \
           --metrics.tls=false
@@ -73,7 +69,6 @@ compose_cmd() {
     docker-compose "$@"
   else
     echo "ERROR: Docker Compose is not available."
-    echo "Install Docker Desktop and enable WSL integration, or install Docker Compose on Linux."
     exit 1
   fi
 }
@@ -81,39 +76,29 @@ compose_cmd() {
 check_docker() {
   if ! docker info >/dev/null 2>&1; then
     echo "ERROR: Docker is not running or this shell cannot access Docker."
-    echo "On WSL: open Docker Desktop and enable WSL integration."
-    echo "On Linux server: start Docker with: sudo systemctl start docker"
     exit 1
   fi
 }
 
-run_chmod() {
-  local target="$1"
-
-  if chmod 777 "$target" 2>/dev/null; then
-    return 0
-  fi
-
-  if command -v sudo >/dev/null 2>&1; then
-    sudo chmod 777 "$target"
-    return 0
-  fi
-
-  echo "ERROR: Cannot chmod 777 ${target}, and sudo is not available."
-  exit 1
-}
-
 prepare_light_dir() {
   mkdir -p "${LIGHT_DIR}"
-  run_chmod "${LIGHT_DIR}"
 
-  # Also try to fix existing content if the directory was created by Docker/root before.
-  if [ -d "${LIGHT_DIR}" ]; then
-    chmod -R 777 "${LIGHT_DIR}" 2>/dev/null || {
+  # Avoid recursive chmod 777. It breaks /home/celestia/keys/p2p-key.
+  chmod 700 "${LIGHT_DIR}" 2>/dev/null || {
+    if command -v sudo >/dev/null 2>&1; then
+      sudo chmod 700 "${LIGHT_DIR}"
+    else
+      echo "WARN: Cannot chmod ${LIGHT_DIR}; continuing."
+    fi
+  }
+
+  # If an old run already chmodded files to 777, repair key permissions.
+  if [ -f "${LIGHT_DIR}/keys/p2p-key" ]; then
+    chmod 600 "${LIGHT_DIR}/keys/p2p-key" 2>/dev/null || {
       if command -v sudo >/dev/null 2>&1; then
-        sudo chmod -R 777 "${LIGHT_DIR}"
+        sudo chmod 600 "${LIGHT_DIR}/keys/p2p-key"
       else
-        echo "WARN: Cannot chmod -R ${LIGHT_DIR}; continuing."
+        echo "WARN: Cannot chmod ${LIGHT_DIR}/keys/p2p-key; continuing."
       fi
     }
   fi
@@ -134,14 +119,14 @@ safe_remove_light_dir() {
 
 show_usage() {
   echo "Usage:"
-  echo "  bash light.sh up        # generate compose, prepare ./light, start node"
-  echo "  bash light.sh down      # stop and remove compose container/network"
-  echo "  bash light.sh restart   # restart node"
-  echo "  bash light.sh logs      # follow logs"
-  echo "  bash light.sh ps        # show status"
-  echo "  bash light.sh pull      # pull image"
-  echo "  bash light.sh config    # print generated docker-compose.yml"
-  echo "  bash light.sh reset     # stop, delete ./light, recreate it, start from scratch"
+  echo "  $0 up"
+  echo "  $0 down"
+  echo "  $0 restart"
+  echo "  $0 logs"
+  echo "  $0 ps"
+  echo "  $0 pull"
+  echo "  $0 config"
+  echo "  $0 reset"
 }
 
 case "${1:-}" in
