@@ -1,14 +1,27 @@
-# Celestia Private Network Helper Scripts
+# Engram Private Network Helper Scripts
 
-Repository này chứa các script hỗ trợ chạy **Celestia Bridge Node** và **Celestia Light Node** bằng Docker Compose.
+## 0. Giới thiệu sơ bộ về Engram
+
+**Engram** là một mạng blockchain hướng tới kiến trúc tách lớp, trong đó phần đồng thuận, lưu trữ dữ liệu và truy cập dữ liệu có thể được triển khai thành các node chuyên biệt. Trong mô hình này, các node không nhất thiết phải cùng làm toàn bộ công việc của mạng, mà có thể đảm nhiệm từng vai trò riêng như validator, bridge node hoặc light node.
+
+Ở mức tổng quát, Engram có thể được hiểu theo 3 nhóm thành phần chính:
+
+- **Validator/Core node**: tham gia sản xuất block, đồng thuận và cung cấp endpoint core RPC/gRPC cho các node khác.
+- **Bridge node**: kết nối với core node, đồng bộ dữ liệu block/header và đóng vai trò trung gian để các light node có thể truy xuất dữ liệu từ mạng.
+- **Light node**: node nhẹ, dùng trusted peers để lấy header và kiểm tra dữ liệu mà không cần tự chạy toàn bộ hạ tầng validator/core.
+
+Các script trong repo này giúp khởi chạy nhanh bridge node và light node bằng Docker Compose. Người dùng chỉ cần chỉnh đúng IP, port và peer ID của các trusted peers, sau đó chạy script tương ứng theo hệ điều hành.
+
+
+Repository này chứa các script hỗ trợ chạy **Engram Bridge Node** và **Engram Light Node** bằng Docker Compose.
 
 ## 1. Cấu trúc file
 
 ```text
 .
-├── bridge.sh   # Script Linux/Ubuntu để chạy Celestia Bridge Node
-├── light.sh    # Script Linux/Ubuntu/WSL để chạy Celestia Light Node
-└── light.bat   # Script Windows CMD để chạy Celestia Light Node
+├── bridge.sh   # Script Linux/Ubuntu để chạy Engram Bridge Node
+├── light.sh    # Script Linux/Ubuntu/WSL để chạy Engram Light Node
+└── light.bat   # Script Windows CMD để chạy Engram Light Node
 ```
 
 ## 2. Yêu cầu trước khi chạy
@@ -215,7 +228,7 @@ docker logs -f <container_name>
 Ví dụ với light node:
 
 ```bash
-docker logs -f celestia-light-node-test
+docker logs -f engram-light-node-test
 ```
 
 Kiểm tra RPC light node trên host:
@@ -274,7 +287,7 @@ Ví dụ:
 
 ```bash
 # Container cùng Docker network
-/dns4/celestia-bridge1/tcp/2121/p2p/<PEER_ID>
+/dns4/engram-bridge1/tcp/2121/p2p/<PEER_ID>
 
 # Máy/server khác kết nối qua public IP
 /ip4/131.153.224.169/tcp/2221/p2p/<PEER_ID>
@@ -324,7 +337,7 @@ Ví dụ:
 --p2p.mutual "$$TRUSTED_PEERS"
 ```
 
-### 10.3. `open /home/celestia/.check: permission denied`
+### 10.3. `open /home/engram/.check: permission denied`
 
 Nguyên nhân: container không có quyền ghi vào thư mục mounted volume.
 
