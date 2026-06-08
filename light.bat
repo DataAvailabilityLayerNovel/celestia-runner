@@ -19,9 +19,9 @@ goto usage
 :write_compose
 (
 echo services:
-echo   celestia-light-node-test-win:
+echo   celestia-light-node-test:
 echo     image: ghcr.io/celestiaorg/celestia-node:v0.28.5-mocha
-echo     container_name: celestia-light-node-test-win
+echo     container_name: celestia-light-node-test
 echo     restart: unless-stopped
 echo     environment:
 echo       - NODE_TYPE=light
@@ -108,7 +108,7 @@ if errorlevel 1 exit /b 1
 
 call :write_compose
 
-docker compose -f "%COMPOSE_FILE%" logs -f celestia-light-node-test-win
+docker compose -f "%COMPOSE_FILE%" logs -f celestia-light-node-test
 goto end
 
 
